@@ -1,13 +1,17 @@
 
-import { useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import './App.css';
-import Trivia from './components/Trivia';
+import Trivia from './components/Trivia.jsx';
+import Start from "./components/Start";
+import Timer from "./components/Timer";
 
 
 function App() {
-
+  const [username, setUserName] = useState (null);
+  const [timeOut, setTimeOut] = useState(false);
   const [questionNumber, setQuestionNumber] = useState(1)
-  const [timeout, setTimeOut] = useState (false)
+  const [stop, setStop] = useState (false)
+  const [earned,setEarned] = useState("€ 0")
 
   const data = [
     {
@@ -238,7 +242,9 @@ function App() {
 
 
   
-  const moneyPiramid = [
+  const moneyPyramid = useMemo(
+    () =>
+      [
         { id: 1, amount: "€ 100" },
         { id: 2, amount: "€ 200" },
         { id: 3, amount: "€ 300" },
@@ -254,36 +260,64 @@ function App() {
         { id: 13, amount: "€ 250.000" },
         { id: 14, amount: "€ 500.000" },
         { id: 15, amount: "€ 1.000.000" },
-  ].reverse()
+      ].reverse(),
+    []
+  );
+
+  useEffect(() => {
+    questionNumber > 1 &&
+      setEarned(moneyPyramid.find((m) => m.id === questionNumber - 1).amount);
+  }, [questionNumber, moneyPyramid]);
+
+
   return (
     <div className="app">
-      <div className="main">
-        <div className='top'>
-          <div className='timer'>30</div>
-        </div>
-        <div className='bottom'>
-          <Trivia data= {data} setTimeOut={setTimeOut}
-          questionNumber={questionNumber}
-          setQuestionNumber={setQuestionNumber}/>
-        </div>
-      </div>
-      <div className="pyramid">
-        <ul className='moneyList'>
-          {moneyPiramid.map((m) =>(
-          
-          <li className= {questionNumber === m.id ? "moneyListItem active" : "moneyListItem"}> 
-          <span className='moneyListItemNumber'>{m.id}</span>
-          <span className='moneyListItemAmount'>{m.amount}</span>
-          
-          </li>
-          ))}
-          
-          
-         
-        
-        </ul>
-      </div>
-  
+      {!username ? (
+        <Start setUsername={setUserName} />
+      ) : (
+        <>
+          <div className="main">
+            {timeOut ? (
+              <h1 className="endText">Has ganado: {earned}</h1>
+            ) : (
+              <>
+                <div className="top">
+                  <div className="timer">
+                    <Timer
+                      setTimeOut={setTimeOut}
+                      questionNumber={questionNumber}
+                    />
+                  </div>
+                </div>
+                <div className="bottom">
+                  <Trivia
+                    data={data}
+                    questionNumber={questionNumber}
+                    setQuestionNumber={setQuestionNumber}
+                    setTimeOut={setTimeOut}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <div className="pyramid">
+            <ul className="moneyList">
+              {moneyPyramid.map((m) => (
+                <li
+                  className={
+                    questionNumber === m.id
+                      ? "moneyListItem active"
+                      : "moneyListItem"
+                  }
+                >
+                  <span className="moneyListItemNumber">{m.id}</span>
+                  <span className="moneyListItemAmount">{m.amount}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
     </div>
   );
 }
